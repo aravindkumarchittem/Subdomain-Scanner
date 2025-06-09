@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Subdomain Scanner</title>
+  <style>
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --secondary: #f59e0b;
+    --danger: #ef4444;
+    --success: #10b981;
+    --dark: #1e293b;
+    --light: #f8fafc;
+    --glass: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --card-bg: rgba(15, 23, 42, 0.7);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    color: var(--light);
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #818cf8, #f472b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+  }
+
+  .scanner-form {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .domain-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #334155;
+    outline: none;
+    transition: all 0.3s ease;
+    color: white;
+    font-weight: 500;
+  }
+
+  .domain-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+  }
+
+  .scan-button {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .scan-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+  }
+
+  /* Dashboard Stats */
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, #818cf8, #f472b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .stat-label {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Results Table */
+  .results-container {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .results-table thead {
+    background: rgba(30, 41, 59, 0.8);
+  }
+
+  .results-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  .results-table tbody tr {
+    border-bottom: 1px solid #1e293b;
+    transition: background 0.2s ease;
+  }
+
+  .results-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .results-table tbody tr:hover {
+    background: rgba(30, 41, 59, 0.5);
+  }
+
+  .results-table td {
+    padding: 1rem 1.5rem;
+    color: #e2e8f0;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .status-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .status-inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .vulnerable-tag {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .vulnerable-yes {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+  }
+
+  .vulnerable-no {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+  }
+
+  /* Loading State */
+  .loading-container {
+    padding: 3rem;
+    text-align: center;
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1.5rem;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-size: 1.1rem;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+  }
+
+  .loading-subtext {
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .dashboard {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .form-group {
+      flex-direction: column;
+    }
+    
+    .scan-button {
+      width: 100%;
+    }
+    
+    .dashboard {
+      grid-template-columns: 1fr;
+    }
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Subdomain Scanner</h1>
+      <p class="subtitle">Discover and analyze all subdomains for any domain</p>
+    </header>
+
+    <form id="domainForm" class="scanner-form">
+      <div class="form-group">
+        <input type="text" id="domain" class="domain-input" placeholder="example.com" required />
+        <button type="submit" class="scan-button">Scan</button>
+      </div>
+    </form>
+
+    <div id="dashboard" class="dashboard" style="display: none;">
+      <div class="stat-card">
+        <div class="stat-value" id="total-subdomains">0</div>
+        <div class="stat-label">Total Subdomains</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="active-subdomains">0</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="inactive-subdomains">0</div>
+        <div class="stat-label">Inactive</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="vulnerable-subdomains">0</div>
+        <div class="stat-label">Vulnerable</div>
+      </div>
+    </div>
+
+    <div id="results" class="results-container">
+      <!-- Results will be inserted here -->
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('domainForm');
+    const resultsDiv = document.getElementById('results');
+    const dashboard = document.getElementById('dashboard');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const domain = document.getElementById('domain').value.trim();
+      
+      // Show loading state
+      resultsDiv.innerHTML = `
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Scanning ${domain}</div>
+          <div class="loading-subtext">Discovering subdomains and analyzing results...</div>
+        </div>
+      `;
+      
+      dashboard.style.display = 'none';
+
+      try {
+        const res = await fetch('/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          resultsDiv.innerHTML = `
+            <div class="loading-container">
+              <div class="loading-text" style="color: var(--danger)">${data.error}</div>
+            </div>
+          `;
+          return;
+        }
+
+        // Update dashboard stats
+        const total = data.subdomains.length;
+        const active = data.subdomains.filter(s => s.status === 'active').length;
+        const inactive = total - active;
+        const vulnerable = data.subdomains.filter(s => s.vulnerable).length;
+        
+        document.getElementById('total-subdomains').textContent = total;
+        document.getElementById('active-subdomains').textContent = active;
+        document.getElementById('inactive-subdomains').textContent = inactive;
+        document.getElementById('vulnerable-subdomains').textContent = vulnerable;
+        
+        dashboard.style.display = 'grid';
+
+        // Create table
+        const tableHTML = `
+          <div class="table-responsive">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Subdomain</th>
+                  <th>Status</th>
+                  <th>CNAME</th>
+                  <th>Vulnerable</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.subdomains.map(sub => `
+                  <tr>
+                    <td>${sub.domain}</td>
+                    <td><span class="status-badge status-${sub.status}">${sub.status.toUpperCase()}</span></td>
+                    <td>${sub.cname || '-'}</td>
+                    <td><span class="vulnerable-tag vulnerable-${sub.vulnerable ? 'yes' : 'no'}">${sub.vulnerable ? 'Yes' : 'No'}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        resultsDiv.innerHTML = tableHTML;
+
+      } catch (error) {
+        resultsDiv.innerHTML = `
+          <div class="loading-container">
+            <div class="loading-text" style="color: var(--danger)">Error: ${error.message}</div>
+          </div>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
