@@ -5,7 +5,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const app = express();
 
-const SECURITYTRAILS_API_KEY = 'F6WJRqWtxnY4SSmgX95cGA3cNUW6FvYZ';
+const SECURITYTRAILS_API_KEY = 'your_API_KEY';
 
 app.use(cors());
 app.use(express.json());
