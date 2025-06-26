@@ -22,18 +22,19 @@ const takeoverPatterns = [
   /bitbucket\.io\.?$/
 ];
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files (index.html, CSS, etc.)
 app.use(express.static(path.join(__dirname)));
 
+// Serve homepage
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-function isVulnerableCNAME(cname) {
-  return takeoverPatterns.some(pattern => pattern.test(cname));
-}
-
+// Scanner endpoint
 app.post('/scan', async (req, res) => {
   const { domain } = req.body;
 
@@ -81,7 +82,7 @@ app.post('/scan', async (req, res) => {
           const cnames = await dns.resolveCname(sub);
           if (cnames.length > 0) {
             cname = cnames[0];
-            vulnerable = isVulnerableCNAME(cname);
+            vulnerable = takeoverPatterns.some(pattern => pattern.test(cname));
           }
         } catch (_) {}
 
@@ -101,6 +102,7 @@ app.post('/scan', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on PORT ${PORT}`);
 });
